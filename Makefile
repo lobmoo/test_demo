@@ -57,10 +57,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/wwk/work_space/wwk_project/game
+CMAKE_SOURCE_DIR = /home/wwk/work_space/wwk_project/test_demo
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/wwk/work_space/wwk_project/game
+CMAKE_BINARY_DIR = /home/wwk/work_space/wwk_project/test_demo
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -87,9 +87,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/wwk/work_space/wwk_project/game/CMakeFiles /home/wwk/work_space/wwk_project/game//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/wwk/work_space/wwk_project/test_demo/CMakeFiles /home/wwk/work_space/wwk_project/test_demo//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/wwk/work_space/wwk_project/game/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/wwk/work_space/wwk_project/test_demo/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -153,30 +153,6 @@ main.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/box.dir/build.make CMakeFiles/box.dir/main.cc.s
 .PHONY : main.cc.s
 
-src/aes_decrypt.o: src/aes_decrypt.cc.o
-.PHONY : src/aes_decrypt.o
-
-# target to build an object file
-src/aes_decrypt.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/box.dir/build.make CMakeFiles/box.dir/src/aes_decrypt.cc.o
-.PHONY : src/aes_decrypt.cc.o
-
-src/aes_decrypt.i: src/aes_decrypt.cc.i
-.PHONY : src/aes_decrypt.i
-
-# target to preprocess a source file
-src/aes_decrypt.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/box.dir/build.make CMakeFiles/box.dir/src/aes_decrypt.cc.i
-.PHONY : src/aes_decrypt.cc.i
-
-src/aes_decrypt.s: src/aes_decrypt.cc.s
-.PHONY : src/aes_decrypt.s
-
-# target to generate assembly for a file
-src/aes_decrypt.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/box.dir/build.make CMakeFiles/box.dir/src/aes_decrypt.cc.s
-.PHONY : src/aes_decrypt.cc.s
-
 src/box.o: src/box.cc.o
 .PHONY : src/box.o
 
@@ -201,54 +177,6 @@ src/box.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/box.dir/build.make CMakeFiles/box.dir/src/box.cc.s
 .PHONY : src/box.cc.s
 
-src/utils_aes.o: src/utils_aes.cc.o
-.PHONY : src/utils_aes.o
-
-# target to build an object file
-src/utils_aes.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/box.dir/build.make CMakeFiles/box.dir/src/utils_aes.cc.o
-.PHONY : src/utils_aes.cc.o
-
-src/utils_aes.i: src/utils_aes.cc.i
-.PHONY : src/utils_aes.i
-
-# target to preprocess a source file
-src/utils_aes.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/box.dir/build.make CMakeFiles/box.dir/src/utils_aes.cc.i
-.PHONY : src/utils_aes.cc.i
-
-src/utils_aes.s: src/utils_aes.cc.s
-.PHONY : src/utils_aes.s
-
-# target to generate assembly for a file
-src/utils_aes.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/box.dir/build.make CMakeFiles/box.dir/src/utils_aes.cc.s
-.PHONY : src/utils_aes.cc.s
-
-src/utils_base64.o: src/utils_base64.cc.o
-.PHONY : src/utils_base64.o
-
-# target to build an object file
-src/utils_base64.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/box.dir/build.make CMakeFiles/box.dir/src/utils_base64.cc.o
-.PHONY : src/utils_base64.cc.o
-
-src/utils_base64.i: src/utils_base64.cc.i
-.PHONY : src/utils_base64.i
-
-# target to preprocess a source file
-src/utils_base64.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/box.dir/build.make CMakeFiles/box.dir/src/utils_base64.cc.i
-.PHONY : src/utils_base64.cc.i
-
-src/utils_base64.s: src/utils_base64.cc.s
-.PHONY : src/utils_base64.s
-
-# target to generate assembly for a file
-src/utils_base64.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/box.dir/build.make CMakeFiles/box.dir/src/utils_base64.cc.s
-.PHONY : src/utils_base64.cc.s
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -261,18 +189,9 @@ help:
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
-	@echo "... src/aes_decrypt.o"
-	@echo "... src/aes_decrypt.i"
-	@echo "... src/aes_decrypt.s"
 	@echo "... src/box.o"
 	@echo "... src/box.i"
 	@echo "... src/box.s"
-	@echo "... src/utils_aes.o"
-	@echo "... src/utils_aes.i"
-	@echo "... src/utils_aes.s"
-	@echo "... src/utils_base64.o"
-	@echo "... src/utils_base64.i"
-	@echo "... src/utils_base64.s"
 .PHONY : help
 
 

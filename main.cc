@@ -1,51 +1,168 @@
-#include <opencv2/opencv.hpp>
+// Copyright (c) 2020 - 2021 by Robert Bosch GmbH All rights reserved.
+// Copyright (c) 2020 - 2022 by Apex.AI Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// SPDX-License-Identifier: Apache-2.0
+
+#include "iceoryx_posh/iceoryx_posh_config.hpp"
+#include "iceoryx_posh/iceoryx_posh_types.hpp"
+#include "iceoryx_posh/internal/roudi/roudi.hpp"
+#include "iceoryx_posh/popo/publisher.hpp"
+#include "iceoryx_posh/popo/subscriber.hpp"
+#include "iceoryx_posh/roudi/iceoryx_roudi_components.hpp"
+#include "iceoryx_posh/runtime/posh_runtime_single_process.hpp"
+#include "iox/detail/convert.hpp"
+#include "iox/logging.hpp"
+#include "iox/signal_watcher.hpp"
+
+#include <atomic>
+#include <chrono>
+#include <cstdint>
 #include <iostream>
-#include <string>
-#include <sys/stat.h>
-#include <sys/types.h>
+#include <mutex>
+#include <thread>
 
+struct TransmissionData_t
+{
+    uint64_t counter;
+};
 
-void saveFrames(const std::string& videoPath, const std::string& outputFolder) {
-    // 打开视频文件
-    cv::VideoCapture video(videoPath);
-    if (!video.isOpened()) {
-        std::cout << "无法打开视频文件" << std::endl;
-        return;
-    }
+constexpr std::chrono::milliseconds CYCLE_TIME{100};
 
-    // 创建输出文件夹
-    if (mkdir(outputFolder.c_str(), 0777) != 0) {
-        std::cout << "无法创建输出文件夹" << std::endl;
-        return;
-    }
+void consoleOutput(const char* source, const char* arrow, const uint64_t counter)
+{
+    static std::mutex consoleOutputMutex;
 
-    int frameCount = 0;
-    while (true) {
-        // 读取视频的一帧
-        cv::Mat frame;
-        video >> frame;
-
-        if (frame.empty())
-            break;
-
-        // 生成输出文件名
-        std::string outputFilePath = outputFolder + "/frame_" + std::to_string(frameCount) + ".jpg";
-
-        // 保存帧为图像文件
-        cv::imwrite(outputFilePath, frame);
-
-        frameCount++;
-    }
-
-    // 释放视频对象
-    video.release();
+    std::lock_guard<std::mutex> lock(consoleOutputMutex);
+    std::cout << source << arrow << counter << std::endl;
 }
 
-int main() {
-    std::string videoPath = "/home/wwk/docker_project/video2image/AR0820_800W_H60_1.mp4";  // 替换为你的视频文件路径
-    std::string outputFolder = "/home/wwk/docker_project/video2image/111";  // 替换为你想要保存帧的输出文件夹路径
+void publisher()
+{
+    
+    iox::popo::PublisherOptions publisherOptions;
+    publisherOptions.historyCapacity = 10U;
+    iox::popo::Publisher<TransmissionData_t> publisher({"Single", "Process", "Demo"}, publisherOptions);
+  
+    uint64_t counter{0};
+    constexpr const char GREEN_RIGHT_ARROW[] = "\033[32m->\033[m ";
+    while (!iox::hasTerminationRequested())
+    {
+        publisher.loan().and_then([&](auto& sample) {
+            sample->counter = counter++;
+            consoleOutput("Sending   ", GREEN_RIGHT_ARROW, sample->counter);
+            sample.publish();
+        });
 
-    saveFrames(videoPath, outputFolder);
-
-    return 0;
+        std::this_thread::sleep_for(CYCLE_TIME);
+    }
+ 
 }
+
+void subscriber()
+{
+   
+    iox::popo::SubscriberOptions options;
+    options.queueCapacity = 10U;
+    options.historyRequest = 5U;
+    iox::popo::Subscriber<TransmissionData_t> subscriber({"Single", "Process", "Demo"}, options);
+
+    constexpr const char ORANGE_LEFT_ARROW[] = "\033[33m<-\033[m ";
+    while (!iox::hasTerminationRequested())
+    {
+        if (iox::SubscribeState::SUBSCRIBED == subscriber.getSubscriptionState())
+        {
+            bool hasMoreSamples{true};
+
+            do
+            {
+                subscriber.take()
+                    .and_then([&](auto& sample) { consoleOutput("Receiving ", ORANGE_LEFT_ARROW, sample->counter); })
+                    .or_else([&](auto& result) {
+                        hasMoreSamples = false;
+                        if (result != iox::popo::ChunkReceiveResult::NO_CHUNK_AVAILABLE)
+                        {
+                            std::cout << "Error receiving chunk." << std::endl;
+                        }
+                    });
+            } while (hasMoreSamples);
+        }
+
+        std::this_thread::sleep_for(CYCLE_TIME);
+    }
+
+}
+
+void subscriber2()
+{
+   
+    iox::popo::SubscriberOptions options;
+    options.queueCapacity = 10U;
+    options.historyRequest = 5U;
+    iox::popo::Subscriber<TransmissionData_t> subscriber({"Single", "Process", "Demo"}, options);
+
+    constexpr const char ORANGE_LEFT_ARROW[] = "\033[33m<-\033[m ";
+    while (!iox::hasTerminationRequested())
+    {
+        if (iox::SubscribeState::SUBSCRIBED == subscriber.getSubscriptionState())
+        {
+            bool hasMoreSamples{true};
+
+            do
+            {
+                subscriber.take()
+                    .and_then([&](auto& sample) { consoleOutput("Receiving--------> ", ORANGE_LEFT_ARROW, sample->counter); })
+                    .or_else([&](auto& result) {
+                        hasMoreSamples = false;
+                        if (result != iox::popo::ChunkReceiveResult::NO_CHUNK_AVAILABLE)
+                        {
+                            std::cout << "Error receiving chunk." << std::endl;
+                        }
+                    });
+            } while (hasMoreSamples);
+        }
+
+        std::this_thread::sleep_for(CYCLE_TIME);
+    }
+
+}
+
+
+ int main()
+ {
+
+    iox::log::Logger::init(iox::log::LogLevel::INFO);
+
+    iox::RouDiConfig_t defaultRouDiConfig = iox::RouDiConfig_t().setDefaults();
+    iox::roudi::IceOryxRouDiComponents roudiComponents(defaultRouDiConfig);
+  
+    constexpr bool TERMINATE_APP_IN_ROUDI_DTOR_FLAG = false;
+    iox::roudi::RouDi roudi(
+        roudiComponents.rouDiMemoryManager,
+        roudiComponents.portManager,
+        iox::roudi::RouDi::RoudiStartupParameters{iox::roudi::MonitoringMode::OFF, TERMINATE_APP_IN_ROUDI_DTOR_FLAG});
+
+    iox::runtime::PoshRuntimeSingleProcess runtime("singleProcessDemo");
+   
+    std::thread publisherThread(publisher), subscriberThread(subscriber),subscriberThread2(subscriber2);
+
+    iox::waitForTerminationRequest();
+
+    publisherThread.join();
+    subscriberThread.join();
+    subscriberThread2.join();
+
+     std::cout << "Finished" << std::endl;
+
+ }
