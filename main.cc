@@ -1,142 +1,114 @@
-// Copyright (c) 2020 - 2021 by Robert Bosch GmbH All rights reserved.
-// Copyright (c) 2020 - 2022 by Apex.AI Inc. All rights reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-// SPDX-License-Identifier: Apache-2.0
+//! [include topic]
+#include "topic_data.h"
+//! [include topic]
 
-#include "iceoryx_posh/iceoryx_posh_config.hpp"
-#include "iceoryx_posh/iceoryx_posh_types.hpp"
-#include "iceoryx_posh/internal/roudi/roudi.hpp"
-#include "iceoryx_posh/popo/publisher.hpp"
-#include "iceoryx_posh/popo/subscriber.hpp"
-#include "iceoryx_posh/roudi/iceoryx_roudi_components.hpp"
-#include "iceoryx_posh/runtime/posh_runtime_single_process.hpp"
-#include "iox/detail/convert.hpp"
-#include "iox/logging.hpp"
+//! [include sig watcher]
 #include "iox/signal_watcher.hpp"
+//! [include sig watcher]
 
-#include <atomic>
-#include <chrono>
-#include <cstdint>
+//! [include]
+#include "iceoryx_posh/popo/subscriber.hpp"
+#include "iceoryx_posh/popo/publisher.hpp"
+#include "iceoryx_posh/runtime/posh_runtime.hpp"
+//! [include]
+
 #include <iostream>
-#include <mutex>
-#include <thread>
-
-struct TransmissionData_t
-{
-    uint64_t counter;
-};
-
-constexpr std::chrono::milliseconds CYCLE_TIME{100};
-
-void consoleOutput(const char* source, const char* arrow, const uint64_t counter)
-{
-    static std::mutex consoleOutputMutex;
-
-    std::lock_guard<std::mutex> lock(consoleOutputMutex);
-    std::cout << source << arrow << counter << std::endl;
-}
 
 void publisher()
 {
-    
-    iox::popo::PublisherOptions publisherOptions;
-    publisherOptions.historyCapacity = 10U;
-    iox::popo::Publisher<TransmissionData_t> publisher({"Single", "Process", "Demo"}, publisherOptions);
-  
-    uint64_t counter{0};
-    constexpr const char GREEN_RIGHT_ARROW[] = "\033[32m->\033[m ";
-    while (!iox::hasTerminationRequested())
-    {
-        publisher.loan().and_then([&](auto& sample) {
-            sample->counter = counter++;
-            consoleOutput("Sending   ", GREEN_RIGHT_ARROW, sample->counter);
-            sample.publish();
-        });
+        //! [initialize runtime]
+    constexpr char APP_NAME[] = "iox-cpp-publisher-helloworld";
+    iox::runtime::PoshRuntime::initRuntime(APP_NAME);
+    //! [initialize runtime]
 
-        std::this_thread::sleep_for(CYCLE_TIME);
+    //! [create publisher]
+    iox::popo::Publisher<RadarObject> publisher({"Radar", "FrontLeft", "Object"});
+    //! [create publisher]
+
+    double ct = 0.0;
+    //! [wait for term]
+    while (!iox::hasTerminationRequested())
+    //! [wait for term]
+    {
+        ++ct;
+
+        // Retrieve a sample from shared memory
+        //! [loan]
+        auto loanResult = publisher.loan();
+        //! [loan]
+        //! [publish]
+        if (loanResult.has_value())
+        {
+            auto& sample = loanResult.value();
+            // Sample can be held until ready to publish
+            sample->x = ct;
+            sample->y = ct+1;
+            sample->z = ct+2;
+            sample.publish();
+        }
+        //! [publish]
+        //! [error]
+        else
+        {
+            auto error = loanResult.error();
+            // Do something with error
+            std::cerr << "Unable to loan sample, error code: " << error << std::endl;
+        }
+        //! [error]
+
+        //! [msg]
+         std::cout << APP_NAME << " got value: " << ct << "  " <<
+                                                    ct+1 <<"  " <<
+                                                    ct+2 << std::endl;
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        //! [msg]
     }
- 
 }
 
 void subscriber()
 {
-   
-    iox::popo::SubscriberOptions options;
-    options.queueCapacity = 10U;
-    options.historyRequest = 5U;
-    iox::popo::Subscriber<TransmissionData_t> subscriber({"Single", "Process", "Demo"}, options);
+       //! [initialize runtime]
+    constexpr char APP_NAME[] = "iox-cpp-subscriber-helloworld";
+    iox::runtime::PoshRuntime::initRuntime(APP_NAME);
+    //! [initialize runtime]
 
-    constexpr const char ORANGE_LEFT_ARROW[] = "\033[33m<-\033[m ";
+    //! [initialize subscriber]
+    iox::popo::Subscriber<RadarObject> subscriber({"Radar", "FrontLeft", "Object"});
+    //! [initialize subscriber]
+
+    // run until interrupted by Ctrl-C
     while (!iox::hasTerminationRequested())
     {
-        if (iox::SubscribeState::SUBSCRIBED == subscriber.getSubscriptionState())
+        //! [receive]
+        auto takeResult = subscriber.take();
+        if (takeResult.has_value())
         {
-            bool hasMoreSamples{true};
-
-            do
+            std::cout << APP_NAME << " got value: " << takeResult.value()->x << "  " <<
+                                                        takeResult.value()->y <<"  " <<
+                                                        takeResult.value()->z << std::endl;
+        }
+        //! [receive]
+        else
+        {
+            //! [error]
+            if (takeResult.error() == iox::popo::ChunkReceiveResult::NO_CHUNK_AVAILABLE)
             {
-                subscriber.take()
-                    .and_then([&](auto& sample) { consoleOutput("Receiving ", ORANGE_LEFT_ARROW, sample->counter); })
-                    .or_else([&](auto& result) {
-                        hasMoreSamples = false;
-                        if (result != iox::popo::ChunkReceiveResult::NO_CHUNK_AVAILABLE)
-                        {
-                            std::cout << "Error receiving chunk." << std::endl;
-                        }
-                    });
-            } while (hasMoreSamples);
+                //std::cout << "No chunk available." << std::endl;   没数据不打印
+            }
+            else
+            {
+                std::cout << "Error receiving chunk." << std::endl;
+            }
+            //! [error]
         }
 
-        std::this_thread::sleep_for(CYCLE_TIME);
+        //! [wait]
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        //! [wait]
     }
 
 }
 
-void subscriber2()
-{
-   
-    iox::popo::SubscriberOptions options;
-    options.queueCapacity = 10U;
-    options.historyRequest = 5U;
-    iox::popo::Subscriber<TransmissionData_t> subscriber({"Single", "Process", "Demo"}, options);
-
-    constexpr const char ORANGE_LEFT_ARROW[] = "\033[33m<-\033[m ";
-    while (!iox::hasTerminationRequested())
-    {
-        if (iox::SubscribeState::SUBSCRIBED == subscriber.getSubscriptionState())
-        {
-            bool hasMoreSamples{true};
-
-            do
-            {
-                subscriber.take()
-                    .and_then([&](auto& sample) { consoleOutput("Receiving--------> ", ORANGE_LEFT_ARROW, sample->counter); })
-                    .or_else([&](auto& result) {
-                        hasMoreSamples = false;
-                        if (result != iox::popo::ChunkReceiveResult::NO_CHUNK_AVAILABLE)
-                        {
-                            std::cout << "Error receiving chunk." << std::endl;
-                        }
-                    });
-            } while (hasMoreSamples);
-        }
-
-        std::this_thread::sleep_for(CYCLE_TIME);
-    }
-
-}
 
 
  int main()
@@ -144,25 +116,13 @@ void subscriber2()
 
     iox::log::Logger::init(iox::log::LogLevel::INFO);
 
-    iox::RouDiConfig_t defaultRouDiConfig = iox::RouDiConfig_t().setDefaults();
-    iox::roudi::IceOryxRouDiComponents roudiComponents(defaultRouDiConfig);
-  
-    constexpr bool TERMINATE_APP_IN_ROUDI_DTOR_FLAG = false;
-    iox::roudi::RouDi roudi(
-        roudiComponents.rouDiMemoryManager,
-        roudiComponents.portManager,
-        iox::roudi::RouDi::RoudiStartupParameters{iox::roudi::MonitoringMode::OFF, TERMINATE_APP_IN_ROUDI_DTOR_FLAG});
-
-    iox::runtime::PoshRuntimeSingleProcess runtime("singleProcessDemo");
-   
-    std::thread publisherThread(publisher), subscriberThread(subscriber),subscriberThread2(subscriber2);
-
-    iox::waitForTerminationRequest();
+    std::thread publisherThread(publisher), subscriberThread(subscriber);
 
     publisherThread.join();
     subscriberThread.join();
-    subscriberThread2.join();
-
+   
      std::cout << "Finished" << std::endl;
 
  }
+
+

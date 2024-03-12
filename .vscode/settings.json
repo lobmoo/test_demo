@@ -79,6 +79,7 @@
         "thread": "cpp",
         "cfenv": "cpp",
         "regex": "cpp",
-        "__hash_table": "cpp"
+        "__hash_table": "cpp",
+        "__node_handle": "cpp"
     }
 }

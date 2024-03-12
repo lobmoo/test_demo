@@ -45,7 +45,8 @@ add_executable(${PROJECT_NAME} ${DIR_SRCS})
 
 # 添加依赖的库
 target_link_libraries(${PROJECT_NAME}
-            iceoryx_posh::iceoryx_posh_roudi
+            #iceoryx_posh::iceoryx_posh_roudi
+            iceoryx_posh::iceoryx_posh
             pthread
        )
 
