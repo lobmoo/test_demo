@@ -1,1 +1,0 @@
-/usr/bin/g++  -g   CMakeFiles/box.dir/main.cc.o CMakeFiles/box.dir/src/box.cc.o  -o ../box  -lpthread 

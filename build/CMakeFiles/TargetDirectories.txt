@@ -1,3 +1,0 @@
-/home/wwk/workspeace/test_demo/build/CMakeFiles/rebuild_cache.dir
-/home/wwk/workspeace/test_demo/build/CMakeFiles/edit_cache.dir
-/home/wwk/workspeace/test_demo/build/CMakeFiles/box.dir
