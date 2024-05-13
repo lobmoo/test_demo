@@ -1,0 +1,12 @@
+[
+{
+  "directory": "/home/wwk/workspeace/test_demo/build",
+  "command": "/usr/bin/g++   -I/home/wwk/workspeace/test_demo/./include  -g   -std=gnu++17 -o CMakeFiles/box.dir/main.cc.o -c /home/wwk/workspeace/test_demo/main.cc",
+  "file": "/home/wwk/workspeace/test_demo/main.cc"
+},
+{
+  "directory": "/home/wwk/workspeace/test_demo/build",
+  "command": "/usr/bin/g++   -I/home/wwk/workspeace/test_demo/./include  -g   -std=gnu++17 -o CMakeFiles/box.dir/src/box.cc.o -c /home/wwk/workspeace/test_demo/src/box.cc",
+  "file": "/home/wwk/workspeace/test_demo/src/box.cc"
+}
+]
