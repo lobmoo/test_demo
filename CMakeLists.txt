@@ -44,7 +44,7 @@ target_link_libraries(${PROJECT_NAME}
 
 # 添加编译选项
 # target_compile_options命令用于添加编译选项
-# target_compile_options(YourExecutableName PRIVATE -Wall -Wextra)
+target_compile_options(box PRIVATE -Wall -Wextra -g -O0)
 
 
 
