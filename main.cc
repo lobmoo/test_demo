@@ -9,29 +9,46 @@
 extern char *optarg; 
 extern int optind;   
 
+void FileupHelp(void)
+{
+std::cout   << "Options:\n"
+            << "  -u, --url        Specify the URL   demo: user:passwd@ip:port \n"
+            << "  -p, --path       Specify the file path (absolute path)\n"
+            << "  -o, --objective  Specify the objective path(absolute path)\n"
+            << "  -h, --help       Display this help message and exit\n";
+}
+
+
 int main(int argc, char *argv[]) 
 {
     optind = 1;
     std::string url;
     std::string path; 
+    std::string optargPath;
     int opt = getopt(argc, argv, "u:p:o:h");
     while (opt != -1) {
         switch (opt) {
             case 'u':
                 url = optarg; 
-                std::cout << "url:" << optarg << std::endl;
+                std::cout << "++++++++++++url:  " << url << std::endl;
                 break;
             case 'p':
-                std::cout << "选项 -a 带的参数是: " << optarg << std::endl;
+                path = optarg;
+                std::cout << "++++++file path:  " << path << std::endl;
                 break;
             case 'o': 
-                std::cerr << "未知选项" << std::endl;
+                optargPath = optarg;
+                std::cout << "+objective path:  " << optargPath << std::endl;
+                break;
+            case 'h':
+                FileupHelp();
                 break;
             default:
-                std::cerr << "未知选项" << std::endl;
+                FileupHelp();
                 return -1;
         }
         opt = getopt(argc, argv, "ha:");
     }
+    FileupHelp();
     return 0;
 }

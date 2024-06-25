@@ -27,14 +27,45 @@
 #endif
 
 
-FtpUpload::FtpUpload()
+
+
+FtpUpload::FtpUpload(std::string url, std::string path, std::string objPath) : _Url(url), _FilePath(path), _objPath(objPath)
 {
- 
+    std::string serverUrl;
+    serverUrl = rmovePathRepeatSlash(url + '/'  + objPath);
+    FTPUPLOAD_INFO("upload url : %s,  objPath : %s \n", url, objPath);
+    if(!FtpFileUpload(serverUrl, path))
+    {
+       FTPUPLOAD_ERR("FtpFileUpload failed!\n"); 
+    }
 }
+
 
 FtpUpload::~FtpUpload()
 {
 
+}
+
+
+
+std::string FtpUpload ::rmovePathRepeatSlash(const std::string &path) {
+    std::string result;
+    size_t length = path.length();
+
+    if (length == 0) {
+        return result;
+    }
+
+    result += path[0];
+
+    for (size_t i = 1; i < length; i++) {
+        if (path[i] == '/' && path[i - 1] == '/') {
+            continue;
+        }
+        result += path[i];
+    }
+
+    return result;
 }
 
 
@@ -59,7 +90,7 @@ bool FtpUpload::FtpFileUpload(std::string ServerUrl,  std::string FilePath)
     {
         FTPUPLOAD_ERR("File size is zero or negative.");
     }
-    FTPUPLOAD_ERR("File size:  %d bytes\n", size);
+    FTPUPLOAD_INFO("File size:  %d bytes\n", size);
 
     CURL *pCurl = curl_easy_init();
     if(pCurl)
