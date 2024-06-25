@@ -15,10 +15,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # include_directories命令用于添加头文件的搜索路径
 include_directories(
         ./include
+        ./thirdparty/curl/include
     )
 
  #命令用于指定库文件的搜索路径
-#link_directories(../lib)
+link_directories(./thirdparty/curl/lib)
 
 
 # 查找目录下的所有源文件
@@ -40,6 +41,7 @@ add_executable(${PROJECT_NAME} ${DIR_SRCS})
 # 添加依赖的库
 target_link_libraries(${PROJECT_NAME}
             pthread
+            curl
        )
 
 # 添加编译选项
