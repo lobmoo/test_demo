@@ -9,6 +9,9 @@
 extern char *optarg; 
 extern int optind;   
 
+
+
+
 void FileupHelp(void)
 {
 std::cout   << "Options:\n"
@@ -21,12 +24,12 @@ std::cout   << "Options:\n"
 
 int main(int argc, char *argv[]) 
 {
-    optind = 1;
     std::string url;
     std::string path; 
     std::string optargPath;
-    int opt = getopt(argc, argv, "u:p:o:h");
-    while (opt != -1) {
+    int opt = -1;
+    optind = 1;
+    while ( -1 != (opt = getopt(argc, argv, "u:p:o:h"))) {
         switch (opt) {
             case 'u':
                 url = optarg; 
@@ -45,10 +48,14 @@ int main(int argc, char *argv[])
                 break;
             default:
                 FileupHelp();
-                return -1;
+                break;
         }
-        opt = getopt(argc, argv, "ha:");
     }
-    FileupHelp();
+    if(url.empty() || path.empty() || optargPath.empty())
+    {
+        FileupHelp();
+    }
+    FtpUpload filup(url, path, optargPath);
+   
     return 0;
 }

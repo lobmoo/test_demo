@@ -3,37 +3,39 @@
 #include <stdio.h>
 #include <fstream>
 #include "curl/curl.h"
+#include <iostream>
+
+#define  DEBUG
 
 
-#define FTPUPLOAD_INFO
-#ifdef FTPUPLOAD_INFO
-#define INFO(fmt, args...) printf("I[%s:%4d] " fmt, __FILE__, __LINE__, ##args)
+#ifdef  DEBUG
+#define FTPUPLOAD_INFO(fmt, args...) do{printf("I[%s:%4d] " fmt, __FILE__, __LINE__, ##args);}while(0);
 #else
-#define INFO(fmt, args...)
+#define FTPUPLOAD_INFO(...) printf(__VA_ARGS__) 
 #endif
     
-#define FTPUPLOAD_WARN
-#ifdef FTPUPLOAD_WARN
-#define WARN(fmt, args...) printf("W[%s:%4d] " fmt, __FILE__, __LINE__, ##args)
+#ifdef  DEBUG
+#define FTPUPLOAD_ERR(fmt, args...) do{ printf("\033[31mE[%s:%4d]\033[0m " fmt, __FILE__, __LINE__, ##args);}while(0);
 #else
-#define WARN(fmt, args...)
+#define FTPUPLOAD_ERR(...) printf(__VA_ARGS__) 
 #endif
-    
-#define FTPUPLOAD_ERR
-#ifdef FTPUPLOAD_ERR
-#define ERR(fmt, args...) printf("\033[31mE[%s:%4d]\033[0m " fmt, __FILE__, __LINE__, ##args)
+  
+#ifdef  DEBUG
+#define FTPUPLOAD_WARN(fmt, args...) do{printf("I[%s:%4d] " fmt, __FILE__, __LINE__, ##args);}while(0);
 #else
-#define ERR(fmt, args...)
+#define FTPUPLOAD_WARN(...) printf(__VA_ARGS__) 
 #endif
-
+  
 
 
 
 FtpUpload::FtpUpload(std::string url, std::string path, std::string objPath) : _Url(url), _FilePath(path), _objPath(objPath)
 {
     std::string serverUrl;
+   
     serverUrl = rmovePathRepeatSlash(url + '/'  + objPath);
-    FTPUPLOAD_INFO("upload url : %s,  objPath : %s \n", url, objPath);
+    serverUrl  = "ftp://" + serverUrl;
+    FTPUPLOAD_INFO("upload url : %s,  objPath : %s \n", serverUrl.c_str(), objPath.c_str());
     if(!FtpFileUpload(serverUrl, path))
     {
        FTPUPLOAD_ERR("FtpFileUpload failed!\n"); 
@@ -80,7 +82,7 @@ bool FtpUpload::FtpFileUpload(std::string ServerUrl,  std::string FilePath)
     std::ifstream inputFile(FilePath, std::ios::binary);
     if (!inputFile.is_open())
     {
-        FTPUPLOAD_ERR("FilePath: %s  open  failed!\n", FilePath);
+        FTPUPLOAD_ERR("FilePath: %s  open  failed!\n", FilePath.c_str());
         return false;
     }
 
@@ -90,7 +92,7 @@ bool FtpUpload::FtpFileUpload(std::string ServerUrl,  std::string FilePath)
     {
         FTPUPLOAD_ERR("File size is zero or negative.");
     }
-    FTPUPLOAD_INFO("File size:  %d bytes\n", size);
+    FTPUPLOAD_INFO("File size:  %ld bytes\n", size);
 
     CURL *pCurl = curl_easy_init();
     if(pCurl)
@@ -98,7 +100,7 @@ bool FtpUpload::FtpFileUpload(std::string ServerUrl,  std::string FilePath)
         curl_easy_setopt(pCurl, CURLOPT_VERBOSE, 1);
 		curl_easy_setopt(pCurl, CURLOPT_UPLOAD, 1L); 												
 		curl_easy_setopt(pCurl, CURLOPT_FTP_CREATE_MISSING_DIRS, 1L);			
-		curl_easy_setopt(pCurl, CURLOPT_URL, ServerUrl);
+		curl_easy_setopt(pCurl, CURLOPT_URL, ServerUrl.c_str());
 		curl_easy_setopt(pCurl, CURLOPT_TIMEOUT, 600);			
 		curl_easy_setopt(pCurl, CURLOPT_CONNECTTIMEOUT, 30);
 		curl_easy_setopt(pCurl, CURLOPT_READDATA, &inputFile);
