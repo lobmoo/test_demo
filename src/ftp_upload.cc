@@ -71,6 +71,12 @@ std::string FtpUpload ::rmovePathRepeatSlash(const std::string &path) {
 }
 
 
+
+ static size_t ReadCallback(void *ptr, size_t size, size_t nmemb, void *userdata) {
+        std::ifstream* stream = static_cast<std::ifstream*>(userdata);
+        return stream->readsome(static_cast<char*>(ptr), size * nmemb);
+}
+
 bool FtpUpload::FtpFileUpload(std::string ServerUrl,  std::string FilePath)
 {
     bool iRet = true;
@@ -91,9 +97,11 @@ bool FtpUpload::FtpFileUpload(std::string ServerUrl,  std::string FilePath)
     if(size <= 0)
     {
         FTPUPLOAD_ERR("File size is zero or negative.");
+        return false;
     }
     FTPUPLOAD_INFO("File size:  %ld bytes\n", size);
-
+    inputFile.seekg(0, std::ios::beg);
+    
     CURL *pCurl = curl_easy_init();
     if(pCurl)
     {
@@ -103,12 +111,13 @@ bool FtpUpload::FtpFileUpload(std::string ServerUrl,  std::string FilePath)
 		curl_easy_setopt(pCurl, CURLOPT_URL, ServerUrl.c_str());
 		curl_easy_setopt(pCurl, CURLOPT_TIMEOUT, 600);			
 		curl_easy_setopt(pCurl, CURLOPT_CONNECTTIMEOUT, 30);
-		curl_easy_setopt(pCurl, CURLOPT_READDATA, &inputFile);
-        curl_easy_setopt(pCurl, CURLOPT_READFUNCTION, [](void *ptr, size_t size, size_t nmemb, void *userdata) {
-            auto *stream = static_cast<std::ifstream *>(userdata);
-            return stream->readsome(static_cast<char *>(ptr), size * nmemb);});
+		curl_easy_setopt(pCurl, CURLOPT_READDATA,&inputFile);
+
+        // curl_easy_setopt(pCurl, CURLOPT_NOPROGRESS, 0L); // 进度回调启用
+        // curl_easy_setopt(pCurl, CURLOPT_XFERINFOFUNCTION, func);
+        curl_easy_setopt(pCurl, CURLOPT_READFUNCTION, ReadCallback);
 		curl_easy_setopt(pCurl, CURLOPT_INFILESIZE_LARGE, static_cast<curl_off_t>(size));	
-		curl_easy_setopt(pCurl, CURLOPT_FTP_RESPONSE_TIMEOUT, 15);
+		curl_easy_setopt(pCurl, CURLOPT_FTP_RESPONSE_TIMEOUT, 15L);
 
         CURLcode res = curl_easy_perform(pCurl);
         if(res != CURLE_OK)
