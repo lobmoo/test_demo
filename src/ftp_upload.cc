@@ -80,37 +80,35 @@ size_t FtpUpload::ReadCallback(void *ptr, size_t size, size_t nmemb, void *userd
 int FtpUpload::progress_callback(void *p, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) 
 {
     
-    static curl_off_t last_ulnow = 0;  // 上一次回调的上传字节数
-    static double last_call_time = 0.0; // 上一次回调的时间（秒）
+    static curl_off_t last_ulnow = 0;  
+    static double last_call_time = 0.0; 
 
-    // 获取当前时间（秒）
+    
     double current_time = time(NULL);
 
-    // 如果是首次回调，不计算速度
+    
     if (last_call_time == 0.0) {
         last_call_time = current_time;
     }
 
-    // 计算自上次回调以来的秒数
+   
     double seconds = current_time - last_call_time;
-    if (seconds > 0) { // 防止除以零
-        // 计算自上次回调以来上传的字节数
+    if (seconds > 0) { 
         curl_off_t bytes_uploaded = ulnow - last_ulnow;
-        // 计算速度（字节/秒）
+        
         double speed = bytes_uploaded / seconds;
 
-        // 更新上次回调的信息
         last_ulnow = ulnow;
         last_call_time = current_time;
 
-        // 格式化速度字符串
+   
         char speed_buffer[50];
-        snprintf(speed_buffer, sizeof(speed_buffer), "Speed: %6.2f Kbytes/sec", speed / 1024);
+        snprintf(speed_buffer, sizeof(speed_buffer), "Speed: %6.2f MB/sec", speed / (1024*1024));
 
-        // 计算上传进度百分比
+        
         double upload_percentage = (double)ulnow / ultotal * 100.0;
 
-        // 打印或更新进度条和速度
+        
         printf("\rUploading: [");
         for (int i = 0; i < 50; ++i) {
             if (i < (upload_percentage * 50 / 100)) {
