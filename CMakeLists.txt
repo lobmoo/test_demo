@@ -6,20 +6,24 @@ project(box)
 # 设置C++标准
 set(CMAKE_CXX_STANDARD   17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(OBJ_CPP_LIBS)
 
 #set(CMAKE_C_COMPILER aarch64-linux-gnu-gcc)
 #set(CMAKE_CXX_COMPILER aarch64-linux-gnu-g++)
+
+message(STATUS "Looking for CURL")
+
+find_package(CURL REQUIRED)
 
 
 # 添加包含目录
 # include_directories命令用于添加头文件的搜索路径
 include_directories(
         ./include
-        ./thirdparty/curl/include
     )
 
- #命令用于指定库文件的搜索路径
-link_directories(./thirdparty/curl/lib)
+#命令用于指定库文件的搜索路径
+#link_directories()
 
 
 # 查找目录下的所有源文件
@@ -38,11 +42,12 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 # 添加可执行文件目标
 add_executable(${PROJECT_NAME} ${DIR_SRCS})
 
+
+list(APPEND OBJ_CPP_LIBS pthread)
+list(APPEND OBJ_CPP_LIBS ${CURL_LIBRARIES})
+
 # 添加依赖的库
-target_link_libraries(${PROJECT_NAME}
-            pthread
-            curl
-       )
+target_link_libraries(${PROJECT_NAME} PUBLIC  ${OBJ_CPP_LIBS})
 
 # 添加编译选项
 # target_compile_options命令用于添加编译选项
